@@ -1,4 +1,4 @@
-function createPropertiesForNewPages(messageText, btnId) {
+function createPropertiesForNewPages(messageText) {
     return [
       {
         Name: {
@@ -13,7 +13,7 @@ function createPropertiesForNewPages(messageText, btnId) {
         },
         Пріоритет: {
           select: {
-            id: btnId,
+            id: 'dc882f8e-9b66-4038-96f1-8cc42e96d475',
           },
         },
       },

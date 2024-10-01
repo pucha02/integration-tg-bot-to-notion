@@ -1,68 +1,51 @@
 import TelegramBot from "node-telegram-bot-api";
 import { main } from "./index.js"; // Это импорт твоей функции main, если она используется
 import createPropertiesForNewPages from "./dataInNotion.js";
+import dataBaseIdNotion from "./dataTablesId.js"; 
 
 const _token = process.env.TELEGRAM_BOT_KEY
 const databaseID = "fffbe50aaef381e6bb60cb5d836eaad0";
+
 let a;
 
 const bot = new TelegramBot(_token, { polling: true });
 
 // Хранилище для текстов сообщений
-const userTexts = new Map();
+const userStates = new Map(); // Сохраняем состояния пользователей
+const userTexts = new Map(); // Сохраняем тексты сообщений пользователей
 
 bot.on("message", (msg) => {
   const chatId = msg.chat.id;
 
-  // Сохраняем текст сообщения пользователя
-  if (msg.text) {
-    userTexts.set(chatId, msg.text);
-    bot.sendMessage(chatId, "До якого проекту додати задачу? ", {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "Високий", callback_data: "button1" }],
-          [{ text: "Середній", callback_data: "button2" }],
-          [{ text: "Низький", callback_data: "button3" }],
-          
-        ],
-      },
-    });
+  // Проверяем состояние пользователя
+  if (userStates.get(chatId) === 'awaiting_project') {
+    const project = msg.text;
+
+    const messageText = userTexts.get(chatId);
+    
+    // Формируем ответ
+    const response = `Ви додали задачу у таблицю ${project}`;
+    console.log()
+    bot.sendMessage(chatId, response);
+
+    // Отправка текста сообщения на сервер
+    try {
+      const propertiesForNewPages = createPropertiesForNewPages(messageText);
+      main(propertiesForNewPages, dataBaseIdNotion[project]);
+    } catch (error) {
+      console.error("Ошибка при отправке POST-запроса:", error);
+    }
+
+    // Сбрасываем состояние пользователя
+    userStates.delete(chatId);
   } else {
-    bot.sendMessage(chatId, "Ольга ..");
-  }
-});
-
-bot.on("callback_query", async (query) => {
-  const chatId = query.message.chat.id;
-  const data = query.data;
-
-  let response;
-  let btnId
-  if (data === "button1") {
-    response = "Ви обрали високий пріоритет";
-    btnId = 'dc882f8e-9b66-4038-96f1-8cc42e96d475'
-  } else if (data === "button2") {
-    response = "Ви обрали середній пріоритет";
-    btnId = 'aaf21ba2-99b9-4060-80fa-5aed867a7469'
-  } else if (data === "button3") {
-    response = "Ви обрали низький пріоритет";
-    btnId = '227739da-e417-46ff-a540-2569f78d5300'
-  }
-
-  bot.sendMessage(chatId, response);
-
-  // Получаем текст сообщения, сохраненный ранее
-  const messageText = userTexts.get(chatId);
-  // Отправка текста сообщения на сервер только после нажатия кнопки
-  const postData = {
-    userId: chatId,
-    messageText: messageText || "Нет текста",
-  };
-
-  try {
-    const propertiesForNewPages = createPropertiesForNewPages(messageText, btnId)
-    main(propertiesForNewPages, databaseID);
-  } catch (error) {
-    console.error("Ошибка при отправке POST-запроса:", error);
+    // Сохраняем текст сообщения пользователя и устанавливаем состояние
+    if (msg.text) {
+      userTexts.set(chatId, msg.text);
+      userStates.set(chatId, 'awaiting_project'); // Устанавливаем состояние ожидания проекта
+      bot.sendMessage(chatId, "До якого проекту додати задачу? ");
+    } else {
+      bot.sendMessage(chatId, "Ольга ..");
+    }
   }
 });
