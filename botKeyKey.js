@@ -1,11 +1,10 @@
 import TelegramBot from "node-telegram-bot-api";
-import { main } from "./index.js"; // Это импорт твоей функции main, если она используется
+import { main } from "./index.js";
 import createPropertiesForNewPages from "./dataInNotion.js";
 import dataBaseIdNotion from "./dataTablesId.js";
+import { sendingToNotionDB } from "./botFunctions/sendingToNotionDB.js";
 
 const _token = process.env.TELEGRAM_BOT_KEY;
-
-let a;
 
 const bot = new TelegramBot(_token, { polling: true });
 
@@ -14,43 +13,39 @@ const userTexts = new Map();
 
 bot.on("message", startBotMassage);
 
-function startBotMassage (msg) {
+bot.onText(/\/add/, (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(chatId, "Увведіть назву проекту, який хочете додати");
+  userStates.set(chatId, "adding_new_project");
+
+});
+
+function startBotMassage(msg) {
+  if (!msg.text.startsWith("/")&&msg.text) {
     const chatId = msg.chat.id;
-  
-    if (userStates.get(chatId) === "awaiting_project") {
-      const projectName = msg.text;
-  
-      const taskName = userTexts.get(chatId);
-  
-      const response = `Ви додали задачу у таблицю ${projectName}`;
-      console.log();
-      bot.sendMessage(chatId, response);
-  
-      var transformProjectName = projectName
-        .replace(/[^a-zA-Z0-9]/g, "")
-        .toLowerCase();
-      console.log(transformProjectName);
-  
-      if (dataBaseIdNotion.hasOwnProperty(transformProjectName)) {
-        try {
-          const propertiesForNewPages = createPropertiesForNewPages(taskName);
-          main(propertiesForNewPages, dataBaseIdNotion[transformProjectName]);
-          bot.sendMessage(chatId, "Ви успішно відправили задачу");
-        } catch (error) {
-          console.error("Ошибка при отправке POST-запроса:", error);
+    switch (userStates.get(chatId)) {
+      case "awaiting_project":
+        sendingToNotionDB(bot, msg, chatId, userTexts, userStates, dataBaseIdNotion, createPropertiesForNewPages, main)
+        break;
+    
+      case "adding_new_project":
+        bot.sendMessage(chatId, "Увведіть id таблиці");
+        userStates.set(chatId, "database_ID");
+        break;
+      
+      case "database_ID":
+        dataBaseIdNotion[`${userTexts}`] = ""
+    
+      default:
+        if (msg.text) {
+          userTexts.set(chatId, msg.text);
+          userStates.set(chatId, "awaiting_project");
+          bot.sendMessage(chatId, `До якого проекту додати задачу?`);
+        } else {
+          bot.sendMessage(chatId, "Ольга ..");
         }
-      } else {
-        bot.sendMessage(chatId, "Неправильно введено назву проекту");
-      }
-  
-      userStates.delete(chatId);
-    } else {
-      if (msg.text) {
-        userTexts.set(chatId, msg.text);
-        userStates.set(chatId, "awaiting_project");
-        bot.sendMessage(chatId, "До якого проекту додати задачу? ");
-      } else {
-        bot.sendMessage(chatId, "Ольга ..");
-      }
+        break;
     }
+    
+  }
 }
