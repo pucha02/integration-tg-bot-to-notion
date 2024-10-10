@@ -10,8 +10,8 @@ const bot = new TelegramBot(_token, { polling: true });
 
 const userStates = new Map();
 const userTexts = new Map();
-const keyProjectName = Map();
-const valueProjectName = Map();
+const keyProjectName = new Map();
+const valueProjectName = new Map();
 
 bot.on("message", startBotMassage);
 
@@ -39,14 +39,20 @@ function startBotMassage(msg) {
         break;
 
       case "adding_new_project":
-        bot.sendMessage(chatId, "Увведіть id бази даних");
         keyProjectName.set(chatId, msg.text);
-        userStates.set("setting_database_ID");                                                                                                                                                                                       
+        bot.sendMessage(chatId, "Введiть  id таблицi");
+        userStates.set(chatId, "setting_database_ID");
         break;
 
       case "setting_database_ID":
-        dataBaseIdNotion[] = "";
+        valueProjectName.set(chatId, msg.text);
+        const projectKey = keyProjectName.get(chatId)
+        const projectValue = valueProjectName.get(chatId)
+        dataBaseIdNotion[`${projectKey}`]=projectValue
         bot.sendMessage(chatId, "проект додан");
+        userStates.delete(chatId);
+        break;
+        
       default:
         if (msg.text) {
           userTexts.set(chatId, msg.text);
