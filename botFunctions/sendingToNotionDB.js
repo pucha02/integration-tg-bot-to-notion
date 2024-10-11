@@ -4,7 +4,6 @@ export const sendingToNotionDB = (bot, msg, chatId, userTexts, userStates, dataB
 
   const response = `Ви додали задачу у таблицю ${projectName}`;
   console.log();
-  bot.sendMessage(chatId, response);
 
   const transformProjectName = projectName
     .replace(/[^a-zA-Z0-9]/g, "")
@@ -15,12 +14,12 @@ export const sendingToNotionDB = (bot, msg, chatId, userTexts, userStates, dataB
     try {
       const propertiesForNewPages = createPropertiesForNewPages(taskName);
       main(propertiesForNewPages, dataBaseIdNotion[transformProjectName]);
-      bot.sendMessage(chatId, "Ви успішно відправили задачу");
+      bot.sendMessage(chatId, `${response}`);
     } catch (error) {
       console.error("Ошибка при отправке POST-запроса:", error);
     }
   } else {
-    bot.sendMessage(chatId, "Неправильно введено назву проекту");
+    bot.sendMessage(chatId, "Неправильно введено назву проекту або невірне id таблиці");
   }
 
   userStates.delete(chatId);
