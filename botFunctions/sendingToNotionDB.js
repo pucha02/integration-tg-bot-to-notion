@@ -20,6 +20,7 @@ export const sendingToNotionDB = (bot, msg, chatId, userTexts, userStates, dataB
     }
   } else {
     bot.sendMessage(chatId, "Неправильно введено назву проекту або невірне id таблиці");
+    bot.sendMessage(chatId, "Введіть задачу")
   }
 
   userStates.delete(chatId);

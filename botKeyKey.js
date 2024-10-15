@@ -14,11 +14,11 @@ const keyProjectName = new Map();
 const valueProjectName = new Map();
 
 const showMenu = (chatId) => {
-  bot.sendMessage(chatId, "Вітаємо у нашому боті", {
+  bot.sendMessage(chatId, "Вітаємо Вас у боті", {
     reply_markup: {
       keyboard: [
         [{ text: "Додати проєкт" }],
-        [{ text: "Подивитися список проектів" }],
+        [{ text: "Подивитися список проєктів" }],
         [{ text: "Відмінити дію" }],
         [{ text: "Видалити проєкт" }],
       ],
@@ -32,36 +32,36 @@ bot.on("message", startBotMassage);
 
 bot.onText(/\/add/, (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, "Увведіть назву проекту, який хочете додати");
+  bot.sendMessage(chatId, "Введіть назву проекту, який хочете додати");
   userStates.set(chatId, "adding_new_project");
 });
 
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   showMenu(chatId);
-  bot.sendMessage(msg.chat.id, "Введіть задачу")
+  bot.sendMessage(msg.chat.id, "Введіть задачу");
 });
 
 bot.onText(/Додати проєкт/, (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, "Увведіть назву проекту, який хочете додати");
+  bot.sendMessage(chatId, "Введіть назву проєкту, який хочете додати");
   userStates.set(chatId, "adding_new_project");
 });
 
 bot.onText(/Подивитися список проектів/, (msg) => {
   const chatId = msg.chat.id;
   const projectsList = Object.keys(dataBaseIdNotion).join("\n");
-  bot.sendMessage(chatId, `Список проектів:\n${projectsList}`);
+  bot.sendMessage(chatId, `Список проєктів:\n${projectsList}`);
 });
 
 bot.onText(/Відмінити дію/, (msg) => {
   userStates.delete(msg.chat.id);
-  bot.sendMessage(msg.chat.id, "Введіть задачу")
+  bot.sendMessage(msg.chat.id, "Введіть задачу");
 });
 
 bot.onText(/Видалити проєкт/, (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, "Увведіть назву проекту, який хочете видалити");
+  bot.sendMessage(chatId, "Введіть назву проєкту, який хочете видалити");
   userStates.set(chatId, "delete_project");
 });
 
@@ -70,7 +70,7 @@ function startBotMassage(msg) {
     !msg.text.startsWith("/") &&
     msg.text &&
     msg.text !== "Додати проєкт" &&
-    msg.text !== "Подивитися список проектів" &&
+    msg.text !== "Подивитися список проєктів" &&
     msg.text !== "Видалити проєкт" &&
     msg.text !== "Відмінити дію"
   ) {
@@ -97,21 +97,29 @@ function startBotMassage(msg) {
 
       case "setting_database_ID":
         valueProjectName.set(chatId, msg.text);
-        const projectKey = keyProjectName.get(chatId);
-        const projectValue = valueProjectName.get(chatId);
+        const projectKey = keyProjectName
+          .get(chatId)
+          .replace(/[^a-zA-Z0-9]/g, "")
+          .toLowerCase();
+        const projectValue = valueProjectName
+          .get(chatId)
+          .replace(/^https:\/\/www\.notion\.so\/|[?].*$/g, "");
         dataBaseIdNotion[`${projectKey}`] = projectValue;
-        bot.sendMessage(chatId, "проект додан");
+        bot.sendMessage(chatId, "Проєкт додано");
         userStates.delete(chatId);
         break;
 
       case "delete_project":
-        if(dataBaseIdNotion[`${msg.text}`]) {
-          delete dataBaseIdNotion[`${msg.text}`]
-          bot.sendMessage(chatId, "Проект видалено")   
-          userStates.delete(chatId)      
+        if (dataBaseIdNotion[`${msg.text}`]) {
+          delete dataBaseIdNotion[`${msg.text}`];
+          bot.sendMessage(chatId, "Проєкт видалено");
+          userStates.delete(chatId);
         } else {
           const projectsList = Object.keys(dataBaseIdNotion).join("\n");
-          bot.sendMessage(chatId, `Неправильно введено назву, спробуйте ще \n Список проектів:\n${projectsList}`)       
+          bot.sendMessage(
+            chatId,
+            `Неправильно введено назву проєкту, спробуйте ще \n Список проектів:\n${projectsList}`
+          );
         }
         break;
 
@@ -119,9 +127,9 @@ function startBotMassage(msg) {
         if (msg.text) {
           userTexts.set(chatId, msg.text);
           userStates.set(chatId, "awaiting_project");
-          bot.sendMessage(chatId, `До якого проекту додати задачу?`);
+          bot.sendMessage(chatId, `Введіть назву проєкту до якого додати задачу?`);
         } else {
-          bot.sendMessage(chatId, "Ольга ..");
+          bot.sendMessage(chatId, "Введіть будь-ласка текстовій тип повідомлення");
         }
         break;
     }
