@@ -48,7 +48,7 @@ bot.onText(/Додати проєкт/, (msg) => {
   userStates.set(chatId, "adding_new_project");
 });
 
-bot.onText(/Подивитися список проектів/, (msg) => {
+bot.onText(/Подивитися список проєктів/, (msg) => {
   const chatId = msg.chat.id;
   const projectsList = Object.keys(dataBaseIdNotion).join("\n");
   bot.sendMessage(chatId, `Список проєктів:\n${projectsList}`);

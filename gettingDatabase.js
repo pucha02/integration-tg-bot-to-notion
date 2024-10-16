@@ -1,17 +1,27 @@
-const apiKey = 'secret_adKCm6v53fvC0u1zjQYzjm8XQjbs4rtrS06pqbbxYo0';
-const databaseId = 'fffbe50aaef38107b7bfddd914113435';
+const apiKey = 'ntn_y37436089877fAfkurwr4UARwiXgA5DmkTdgFOgtk9gfZb';
+const databaseId = '1200df22f09b8005a7a7c24dc5e3de77';
 
-const url = `https://api.notion.com/v1/databases/${databaseId}`;
-const headers = {
-    'Authorization': `Bearer ${apiKey}`,
-    'Notion-Version': '2022-06-28'
-};
+import { Client } from "@notionhq/client";
 
-fetch(url, { headers })
-    .then(response => response.json())
-    .then(data => {
-        console.log(data.properties['Пріоритет'].select);
-    })
-    .catch(error => {
-        console.error('Error fetching data:', error);
-    });
+// const url = `https://api.notion.com/v1/users`;
+// const headers = {
+//     'Authorization': `Bearer ${apiKey}`,
+//     'Notion-Version': '2022-06-28'
+// };
+
+// fetch(url, { headers })
+//     .then(response => response.json())
+//     .then(data => {
+//         console.log(data);
+//     })
+//     .catch(error => {
+//         console.error('Error fetching data:', error);
+//     });
+
+    const notion = new Client(apiKey);
+    
+    (async () => {
+      const pageId = '1200df22f09b80a49410ebaabc722517';
+      const response = await notion.pages.retrieve({ page_id: pageId });
+      console.log(response);
+    })();
