@@ -1,6 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
 import { main } from "./index.js";
-import {createPropertiesForNewPages, toDoListTable} from "./notionObject.js";
+import { createPropertiesForNewPages, toDoListTable } from "./notionObject.js";
 import dataBaseIdNotion from "./dataTablesId.js";
 import personalCabinet from "./dataPersonalCabinet.js";
 import { sendingToNotionDB } from "./botFunctions/sendingToNotionDB.js";
@@ -18,7 +18,6 @@ const showMenu = (chatId) => {
   bot.sendMessage(chatId, "Вітаємо Вас у боті", {
     reply_markup: {
       keyboard: [
-        [{ text: "Додати задачу в ToDo List" }],
         [{ text: "Подивитися список проєктів" }],
         [{ text: "Відмінити дію" }],
         [{ text: "Додати проєкт" }],
@@ -30,15 +29,37 @@ const showMenu = (chatId) => {
   });
 };
 
-
+const options = {
+  reply_markup: {
+    inline_keyboard: [
+      [
+        { text: "В проєкти", callback_data: "add_project_task"},
+        { text: "В особистий ToDo", callback_data: "add_todo_task" },
+      ],
+    ],
+  },
+};
 
 bot.on("message", startBotMassage);
 
+bot.on("callback_query", (query) => {
+  const chatId = query.message.chat.id;
+
+  if (query.data === "add_project_task") {
+    bot.sendMessage(chatId, "У який проєкт додати задачу?");
+    userStates.set(chatId, "awaiting_project");
+  } else if (query.data === "add_todo_task") {
+    bot.sendMessage(chatId, "Введіть свій id");
+    userStates.set(chatId, "adding_task_to_ToDo");
+  }
+
+  // bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: chatId, message_id: query.message.message_id });
+});
 
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   showMenu(chatId);
-  bot.sendMessage(chatId, "Введіть задачу");
+  bot.sendMessage(chatId, "Введіть подію");
 });
 
 bot.onText(/Додати проєкт/, (msg) => {
@@ -55,19 +76,13 @@ bot.onText(/Подивитися список проєктів/, (msg) => {
 
 bot.onText(/Відмінити дію/, (msg) => {
   userStates.delete(msg.chat.id);
-  bot.sendMessage(msg.chat.id, "Введіть задачу");
+  bot.sendMessage(msg.chat.id, "Введіть подію");
 });
 
 bot.onText(/Видалити проєкт/, (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, "Введіть назву проєкту, який хочете видалити");
   userStates.set(chatId, "delete_project");
-});
-
-bot.onText(/Додати задачу в ToDo List/, (msg) => {
-  const chatId = msg.chat.id;
-  bot.sendMessage(chatId, "Введіть задачу (ToDo List)");
-  userStates.set(chatId, "input_surname");
 });
 
 function startBotMassage(msg) {
@@ -95,14 +110,19 @@ function startBotMassage(msg) {
         );
         break;
 
+      case "input_project_name":
+        userStates.set(chatId, "awaiting_project");
+        bot.sendMessage(
+          chatId,
+          `Введіть назву проєкту до якого додати задачу?`
+        );
+        break;
+
       case "input_surname":
         if (msg.text) {
           userTexts.set(chatId, msg.text);
           userStates.set(chatId, "adding_task_to_ToDo");
-          bot.sendMessage(
-            chatId,
-            `Введіть свое прізвище`
-          );
+          bot.sendMessage(chatId, `Введіть свое прізвище`);
         } else {
           bot.sendMessage(
             chatId,
@@ -122,7 +142,7 @@ function startBotMassage(msg) {
           toDoListTable,
           main
         );
-        break
+        break;
 
       case "adding_new_project":
         keyProjectName.set(chatId, msg.text);
@@ -161,11 +181,7 @@ function startBotMassage(msg) {
       default:
         if (msg.text) {
           userTexts.set(chatId, msg.text);
-          userStates.set(chatId, "awaiting_project");
-          bot.sendMessage(
-            chatId,
-            `Введіть назву проєкту до якого додати задачу?`
-          );
+          bot.sendMessage(chatId, "Куди додати подію", options);
         } else {
           bot.sendMessage(
             chatId,
