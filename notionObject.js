@@ -1,4 +1,4 @@
-function createPropertiesForNewPages(messageText) {
+export const createPropertiesForNewPages = (messageText) => {
     return [
       {
         Name: {
@@ -20,4 +20,21 @@ function createPropertiesForNewPages(messageText) {
     ];
   }
 
-export default createPropertiesForNewPages
+export const toDoListTable = (messageText) => {
+  return [
+    {
+      Name: {
+        type: "title",
+        title: [{ type: "text", text: { content: messageText } }],
+      },
+      Status: {
+        type: "status",
+        status: {
+          id: '488bef4b-7f99-41ad-add8-b1266fbc3fae',
+          name: 'Вхідні',
+          color: 'green'
+        }
+      },
+    },
+  ];
+}

@@ -19,9 +19,7 @@ export const sendingToNotionDB = (bot, msg, chatId, userTexts, userStates, dataB
       console.error("Ошибка при отправке POST-запроса:", error);
     }
   } else {
-    bot.sendMessage(chatId, "Неправильно введено назву проекту або невірне id таблиці");
-    bot.sendMessage(chatId, "Введіть задачу")
+    bot.sendMessage(chatId, "Неправильно введено назву таблиці або невірне id таблиці");
   }
-
   userStates.delete(chatId);
 };
