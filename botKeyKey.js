@@ -1,9 +1,10 @@
 import TelegramBot from "node-telegram-bot-api";
 import { main } from "./index.js";
-import { createPropertiesForNewPages, toDoListTable } from "./notionObject.js";
+import { createPropertiesForNewPages, toDoListTable, TeamCalendar } from "./notionObject.js";
 import dataBaseIdNotion from "./dataTablesId.js";
 import personalCabinet from "./dataPersonalCabinet.js";
 import { sendingToNotionDB } from "./botFunctions/sendingToNotionDB.js";
+import userId from "./userId.js";
 
 const _token = process.env.TELEGRAM_BOT_KEY;
 
@@ -13,6 +14,8 @@ const userStates = new Map();
 const userTexts = new Map();
 const keyProjectName = new Map();
 const valueProjectName = new Map();
+const date = new Map();
+const person = new Map();
 
 const showMenu = (chatId) => {
   bot.sendMessage(chatId, "Вітаємо Вас у боті", {
@@ -35,6 +38,7 @@ const options = {
       [
         { text: "В проєкти", callback_data: "add_project_task"},
         { text: "В особистий ToDo", callback_data: "add_todo_task" },
+        { text: "В Team Calendar", callback_data: "add_team_calendar" }
       ],
     ],
   },
@@ -51,6 +55,9 @@ bot.on("callback_query", (query) => {
   } else if (query.data === "add_todo_task") {
     bot.sendMessage(chatId, "Введіть свій id");
     userStates.set(chatId, "adding_task_to_ToDo");
+  } else if (query.data === "add_team_calendar") {
+    bot.sendMessage(chatId, "Введіть дату");
+    userStates.set(chatId, "setDate");
   }
 
   // bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: chatId, message_id: query.message.message_id });
@@ -176,6 +183,35 @@ function startBotMassage(msg) {
             `Неправильно введено назву проєкту, спробуйте ще \n Список проектів:\n${projectsList}`
           );
         }
+        break;
+
+      case "setDate": 
+      if (msg.text) {
+        date.set(chatId, msg.text);
+        userStates.set(chatId, "setPerson")
+        bot.sendMessage(chatId, "Введіть відповідального");
+      } else {
+        bot.sendMessage(
+          chatId,
+          "Введіть будь-ласка текстовій тип повідомлення"
+        );
+      }
+      break;
+
+      case "setPerson":
+        person.set(chatId, userId[`${msg.text}`])
+        sendingToNotionDB(
+          bot,
+          msg,
+          chatId,
+          userTexts,
+          userStates,
+          dataBaseIdNotion,
+          TeamCalendar,
+          main,
+          person,
+          date
+        );
         break;
 
       default:
