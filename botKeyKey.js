@@ -21,10 +21,11 @@ const showMenu = (chatId) => {
   bot.sendMessage(chatId, "Вітаємо Вас у боті", {
     reply_markup: {
       keyboard: [
-        [{ text: "Подивитися список проєктів" }],
-        [{ text: "Відмінити дію" }],
-        [{ text: "Додати проєкт" }],
-        [{ text: "Видалити проєкт" }],
+        [{ text: "Подивитися список проєктів ⬇️" }],
+        [{ text: "Повернутися назад ↩️" }],
+        [{ text: "Додати проєкт ➕" }],
+        [{ text: "Видалити проєкт ❌" }],
+        [{ text: "Подивитися список команди 👥" }],
       ],
       resize_keyboard: true,
       one_time_keyboard: false,
@@ -36,7 +37,7 @@ const options = {
   reply_markup: {
     inline_keyboard: [
       [
-        { text: "В проєкти", callback_data: "add_project_task"},
+        { text: "В проєкти", callback_data: "add_project_task" },
         { text: "В особистий ToDo", callback_data: "add_todo_task" },
         { text: "В Team Calendar", callback_data: "add_team_calendar" }
       ],
@@ -50,13 +51,13 @@ bot.on("callback_query", (query) => {
   const chatId = query.message.chat.id;
 
   if (query.data === "add_project_task") {
-    bot.sendMessage(chatId, "У який проєкт додати задачу?");
+    bot.sendMessage(chatId, "У який проєкт додати задачу? 🔽");
     userStates.set(chatId, "awaiting_project");
   } else if (query.data === "add_todo_task") {
-    bot.sendMessage(chatId, "Введіть свій id");
+    bot.sendMessage(chatId, "Введіть свій id 🔽");
     userStates.set(chatId, "adding_task_to_ToDo");
   } else if (query.data === "add_team_calendar") {
-    bot.sendMessage(chatId, "Введіть дату");
+    bot.sendMessage(chatId, "Введіть дату у форматі yyyy-mm-dd 🔽");
     userStates.set(chatId, "setDate");
   }
 
@@ -66,41 +67,49 @@ bot.on("callback_query", (query) => {
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   showMenu(chatId);
-  bot.sendMessage(chatId, "Введіть подію");
+  bot.sendMessage(chatId, "🟢 Введіть подію/задачу");
 });
 
-bot.onText(/Додати проєкт/, (msg) => {
+bot.onText(/Додати проєкт ➕/, (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, "Введіть назву проєкту, який хочете додати");
   userStates.set(chatId, "adding_new_project");
 });
 
-bot.onText(/Подивитися список проєктів/, (msg) => {
+bot.onText(/Подивитися список проєктів ⬇️/, (msg) => {
   const chatId = msg.chat.id;
   const projectsList = Object.keys(dataBaseIdNotion).join("\n");
   bot.sendMessage(chatId, `Список проєктів:\n${projectsList}`);
 });
 
-bot.onText(/Відмінити дію/, (msg) => {
+bot.onText(/Відмінити дію ⬅️/, (msg) => {
   userStates.delete(msg.chat.id);
   bot.sendMessage(msg.chat.id, "Введіть подію");
 });
 
-bot.onText(/Видалити проєкт/, (msg) => {
+bot.onText(/Видалити проєкт ❌/, (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, "Введіть назву проєкту, який хочете видалити");
   userStates.set(chatId, "delete_project");
 });
 
+bot.onText(/Подивитися список команди 👥/, (msg) => {
+  const chatId = msg.chat.id;
+  const projectsList = userId.name.map((item) => item).join('\n');
+  bot.sendMessage(chatId, `\n${projectsList}`);
+});
+
+
 function startBotMassage(msg) {
   if (
     !msg.text.startsWith("/") &&
     msg.text &&
-    msg.text !== "Додати проєкт" &&
-    msg.text !== "Подивитися список проєктів" &&
-    msg.text !== "Видалити проєкт" &&
-    msg.text !== "Відмінити дію" &&
-    msg.text !== "Додати задачу в ToDo List"
+    msg.text !== "Додати проєкт ➕" &&
+    msg.text !== "Подивитися список проєктів ⬇️" &&
+    msg.text !== "Видалити проєкт ❌" &&
+    msg.text !== "Відмінити дію ⬅️" &&
+    msg.text !== "Додати задачу в ToDo List" &&
+    msg.text !== "Подивитися список команди 👥"
   ) {
     const chatId = msg.chat.id;
     switch (userStates.get(chatId)) {
@@ -185,33 +194,41 @@ function startBotMassage(msg) {
         }
         break;
 
-      case "setDate": 
-      if (msg.text) {
-        date.set(chatId, msg.text);
-        userStates.set(chatId, "setPerson")
-        bot.sendMessage(chatId, "Введіть відповідального");
-      } else {
-        bot.sendMessage(
-          chatId,
-          "Введіть будь-ласка текстовій тип повідомлення"
-        );
-      }
-      break;
+      case "setDate":
+        if (msg.text) {
+          date.set(chatId, msg.text);
+          userStates.set(chatId, "setPerson")
+          bot.sendMessage(chatId, "Введіть відповідального");
+        } else {
+          bot.sendMessage(
+            chatId,
+            "Введіть будь-ласка текстовій тип повідомлення"
+          );
+        }
+        break;
 
       case "setPerson":
-        person.set(chatId, userId[`${msg.text}`])
-        sendingToNotionDB(
-          bot,
-          msg,
-          chatId,
-          userTexts,
-          userStates,
-          dataBaseIdNotion,
-          TeamCalendar,
-          main,
-          person,
-          date
-        );
+        if (userId.id[`${msg.text}`]) {
+          person.set(chatId, userId.id[`${msg.text}`])
+          sendingToNotionDB(
+            bot,
+            msg,
+            chatId,
+            userTexts,
+            userStates,
+            dataBaseIdNotion,
+            TeamCalendar,
+            main,
+            person,
+            date
+          );
+        } else {
+          bot.sendMessage(
+            chatId,
+            `Неправильно введено id відповідального, спробуйте ще, або подивіться список команди`
+          );
+        }
+
         break;
 
       default:

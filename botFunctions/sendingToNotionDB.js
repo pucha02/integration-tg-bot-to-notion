@@ -1,4 +1,4 @@
-export const sendingToNotionDB = (
+export const sendingToNotionDB = async (
   bot,
   msg,
   chatId,
@@ -46,16 +46,21 @@ export const sendingToNotionDB = (
       } else {
         var propertiesForNewPages = createPropertiesForNewPages(taskName);
       }
-      main(propertiesForNewPages, dataBaseIdNotion[transformProjectName]);
+      await main(propertiesForNewPages, dataBaseIdNotion[transformProjectName]);
       bot.sendMessage(chatId, `${response}`);
+      bot.sendMessage(chatId, '🟢 Введіть подію/задачу' );
     } catch (error) {
       console.error("Ошибка при отправке POST-запроса:", error);
     }
+    userStates.delete(chatId);
   } else {
     bot.sendMessage(
       chatId,
       `Неправильно введено назву таблиці або невірне id таблиці ${transformProjectName}`
     );
+    bot.sendMessage(
+      chatId,
+      `Спробуйте ще`
+    );
   }
-  userStates.delete(chatId);
 };
